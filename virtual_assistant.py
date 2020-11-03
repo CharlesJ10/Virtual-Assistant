@@ -7,11 +7,17 @@
 import speech_recognition as sr 
 import os
 from gtts import gTTS 
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 import datetime
 import warnings
 import calendar 
 import random 
 import wikipedia 
+import re 
+import webbrowser
+import urllib.request #used to make requests
+import urllib.parse #used to parse values into the url
 
 
 # Ignore any warning messages
@@ -23,6 +29,11 @@ def recordAudio():
     r = sr.Recognizer()
     with sr.Microphone() as source: # Create an instance of microphone
         print ('Say something...')
+        r.pause_threshold = 1
+        #wait for a second to let the recognizer adjust the  
+        #energy threshold based on the surrounding noise level 
+        r.adjust_for_ambient_noise(source, duration=1)
+        #listens for the user's input
         audio = r.listen(source)
 
     # Speech recognition using Google's Speech Recognition
@@ -35,18 +46,18 @@ def recordAudio():
     except sr.RequestError as e:
         print('Request error from Google Speech Recognition')
         
-    return data
+    return data.lower()
 
 
 # Function to get the virtual assistant response
 def assistantResponse(text):
     print(text)
 
-    # Convert the text to speech 
+    # Convert the text to speech
     myObj = gTTS(text=text, lang='en', slow=False)
 
     # Save the converted audio to a file
-    myObj.save('assistant_response.mp3')
+    myObj.save('assistant_response.mp3')    
 
     # Play the converted file and delete
     os.system('start assistant_response.mp3')
@@ -123,7 +134,7 @@ while True:
             response = response + ' ' + get_date
 
         # Check to see if the user said time
-        if ('time' in text):
+        elif ('time' in text):
             now = datetime.datetime.now()
             meridiem = ''
             if now.hour >= 12:
@@ -143,12 +154,48 @@ while True:
 
 
         # Check to see if the user wants to know about a person
-        if ('who is' in text):
+        elif ('who is' in text):
             person = getPerson(text)
             wiki = wikipedia.summary(person, sentences = 2)
             response = response + ' ' + wiki
 
+        # Search Google
+        elif 'open google and search' in text:
+            reg_ex = re.search('open google and search (.*)', text)
+            search_for = text.split("search", 1)[1] # Stores search keyword from the user
+            url = 'https://www.google.com/'
+            # if reg_ex:
+            #     subgoogle = reg_ex.group(1)
+            #     url = url + 'r/' + subgoogle
+            # print('Okay!')
+
+            driver = webdriver.Chrome("C:/Users/cogbo2/Computer Programs/Python/chromedriver.exe")
+            driver.get('http://www.google.com')
+            search = driver.find_element_by_name('q') # Finds search box element
+            search.send_keys(str(search_for)) # Sends search keys
+            search.send_keys(Keys.RETURN) # Hits enter
+
+        elif 'what is' in text:
+            reg_ex = re.search('what is (.*)', text)
+            search_for = text.split("is", 1)[1] # Stores search keyword from the user
+            url = 'https://www.google.com/'
+            # if reg_ex:
+            #     subgoogle = reg_ex.group(1)
+            #     url = url + 'r/' + subgoogle
+            # print('Okay!')
+
+            driver = webdriver.Chrome("C:/Users/cogbo2/Computer Programs/Python/chromedriver.exe")
+            driver.get('http://www.google.com')
+            search = driver.find_element_by_name('q') # Finds search box element
+            search.send_keys(str(search_for)) # Sends search keys
+            search.send_keys(Keys.RETURN) # Hits enter
         
-        # Assistant Audio Response 
-        assistantResponse(response)
+
+        if (len(response) > 0):
+            # Assistant Audio Response 
+            assistantResponse(response)
+        else:
+            continue
+        
+        
 
