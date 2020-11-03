@@ -190,6 +190,17 @@ while True:
             search.send_keys(str(search_for)) # Sends search keys
             search.send_keys(Keys.RETURN) # Hits enter
         
+        elif ('youtube' in text):
+            assistantResponse("Ok!")
+            reg_ex = re.search('youtube (.+)', text)
+            if (reg_ex):
+                domain = text.split("youtube", 1)[1]
+                query_string = urllib.parse.urlencode({"search_query" : domain})
+                html_content = urllib.request.urlopen("http://www.youtube.com/results?" + query_string) 
+                search_results = re.findall(r'watch\?v=(\S{11})', html_content.read().decode()) # finds all links in search result
+                webbrowser.open("http://www.youtube.com/watch?v={}".format(search_results[0]))
+                pass
+
 
         if (len(response) > 0):
             # Assistant Audio Response 
